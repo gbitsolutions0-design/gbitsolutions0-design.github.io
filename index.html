@@ -31,8 +31,25 @@ header{position:sticky;top:0;z-index:9;background:#050811dd;backdrop-filter:blur
 </div></div></section></main>
 <footer><div class="wrap">© 2026 GB IT Solutions · Professional IT Repair · Mumbai</div></footer>
 <div class="bottom"><a href="#home"><b>⌂</b>Home</a><a href="#booking"><b>＋</b>Book</a><a target="_blank" href="https://wa.me/918898057804"><b>◉</b>WhatsApp</a></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script>
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 function selectService(s){document.querySelector('#service').value=s;document.querySelector('#booking').scrollIntoView({behavior:'smooth'})}
 function enquire(p){open('https://wa.me/918898057804?text='+encodeURIComponent('Hi GB IT Solutions, I want to enquire about '+p+'. Please share availability and price.'),'_blank')}
-document.querySelector('#form').addEventListener('submit',e=>{e.preventDefault();let v=id=>document.getElementById(id).value.trim();let msg=`*GB IT Solutions – New Service Booking*%0A%0A*Name:* ${v('name')}%0A*Mobile:* ${v('mobile')}%0A*Email:* ${v('email')||'Not provided'}%0A*Service:* ${v('service')}%0A*Device:* ${v('device')}%0A*Problem:* ${v('problem')}%0A*Preferred:* ${v('datetime')||'Not specified'}%0A*Address:* ${v('address')||'Not provided'}`;open('https://wa.me/918898057804?text='+msg,'_blank')})
+function makeRef(){return '#GB'+Date.now().toString(36).toUpperCase().slice(-6)+Math.random().toString(36).slice(2,5).toUpperCase()}
+function waBooking(v,ref){const msg=`*GB IT Solutions – New Service Booking*%0A%0A*Reference:* ${encodeURIComponent(ref)}%0A*Name:* ${encodeURIComponent(v('name'))}%0A*Mobile:* ${encodeURIComponent(v('mobile'))}%0A*Email:* ${encodeURIComponent(v('email')||'Not provided')}%0A*Service:* ${encodeURIComponent(v('service'))}%0A*Device:* ${encodeURIComponent(v('device'))}%0A*Problem:* ${encodeURIComponent(v('problem'))}%0A*Preferred:* ${encodeURIComponent(v('datetime')||'Not specified')}%0A*Address:* ${encodeURIComponent(v('address')||'Not provided')}`;open('https://wa.me/918898057804?text='+msg,'_blank')}
+document.querySelector('#form').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const btn=e.currentTarget.querySelector('button[type="submit"]');
+ const old=btn.textContent; btn.disabled=true; btn.textContent='Saving booking…';
+ const v=id=>document.getElementById(id).value.trim();
+ const ref=makeRef();
+ const payload={reference:ref,full_name:v('name'),mobile:v('mobile'),email:v('email')||null,service:v('service'),device_type:v('device')||'Other',problem:v('problem'),preferred_datetime:v('datetime')?new Date(v('datetime')).toISOString():null,address:v('address')||null,status:'Pending'};
+ const {error}=await db.from('bookings').insert(payload);
+ if(error){alert('Booking save nahi hua. Please try again.\n\n'+error.message);btn.disabled=false;btn.textContent=old;return}
+ alert('Booking confirmed!\nReference: '+ref+'\nStatus: Pending');
+ waBooking(v,ref);
+ e.currentTarget.reset(); btn.disabled=false; btn.textContent=old;
+});
 </script></body></html>
