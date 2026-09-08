@@ -1,0 +1,30 @@
+name: Apply admin enhancements
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add admin enhancement script
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('admin.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="admin-enhancements.js"></script>'
+          if tag not in s:
+              s=s.replace('</body>',tag+'</body>',1) if '</body>' in s else s+tag
+              p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add admin.html admin-enhancements.js
+          git diff --cached --quiet || git commit -m 'Add admin image manager'
+          git push
