@@ -6,15 +6,15 @@
   const client=(typeof db!=='undefined'&&db)?db:(typeof supabase!=='undefined'&&typeof SUPABASE_URL!=='undefined'&&typeof SUPABASE_ANON_KEY!=='undefined'?supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null);
   if(!client)return;
 
-  // Automatically sign out after 5 minutes of inactivity.
-  const IDLE_LIMIT=5*60*1000;let idleTimer;
+  // Automatically sign out after 10 minutes of inactivity.
+  const IDLE_LIMIT=10*60*1000;let idleTimer;
   function resetIdleTimer(){
     clearTimeout(idleTimer);
     const dash=document.getElementById('dash');
     if(!dash||dash.classList.contains('hidden'))return;
     idleTimer=setTimeout(async()=>{
       try{await client.auth.signOut()}catch(e){}
-      alert('Admin session expired after 5 minutes of inactivity. Please login again.');
+      alert('Admin session expired after 10 minutes of inactivity. Please login again.');
       location.reload();
     },IDLE_LIMIT);
   }
