@@ -1,13 +1,30 @@
-/* GB IT Solutions admin image manager */
+/* GB IT Solutions admin enhancements */
 (function(){
   'use strict';
+  if(window.__GB_ADMIN_ENHANCEMENTS_LOADED)return;
+  window.__GB_ADMIN_ENHANCEMENTS_LOADED=true;
   const client=(typeof db!=='undefined'&&db)?db:(typeof supabase!=='undefined'&&typeof SUPABASE_URL!=='undefined'&&typeof SUPABASE_ANON_KEY!=='undefined'?supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null);
   if(!client)return;
+
+  // Automatically sign out after 5 minutes of inactivity.
+  const IDLE_LIMIT=5*60*1000;let idleTimer;
+  function resetIdleTimer(){
+    clearTimeout(idleTimer);
+    const dash=document.getElementById('dash');
+    if(!dash||dash.classList.contains('hidden'))return;
+    idleTimer=setTimeout(async()=>{
+      try{await client.auth.signOut()}catch(e){}
+      alert('Admin session expired after 5 minutes of inactivity. Please login again.');
+      location.reload();
+    },IDLE_LIMIT);
+  }
+  ['click','keydown','mousemove','scroll','touchstart'].forEach(ev=>document.addEventListener(ev,resetIdleTimer,{passive:true}));
+  if(client.auth&&client.auth.onAuthStateChange){client.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN')resetIdleTimer();if(event==='SIGNED_OUT')clearTimeout(idleTimer);});}
+  setTimeout(resetIdleTimer,1000);
+
   const nav=document.querySelector('.tabs'),dash=document.querySelector('#dash');
   if(!nav||!dash)return;
-  // If another copy of this script already initialized the manager, do nothing.
   if(document.getElementById('images'))return;
-
   const panel=document.createElement('section');
   panel.id='images';panel.className='panel hidden';
   panel.innerHTML=`<div class="row"><h3 style="margin:0 auto 0 0">🖼️ Images / Gallery</h3><button type="button" id="refreshImages">Refresh</button></div>
@@ -21,12 +38,9 @@
   </form><br><div id="imageMsg" class="muted"></div>
   <div class="table"><table><thead><tr><th>Preview</th><th>Title</th><th>Section</th><th>Visible</th><th>Actions</th></tr></thead><tbody id="imageRows"></tbody></table></div>`;
   dash.appendChild(panel);
-
-  // Reuse the existing Images / Gallery tab if admin.html already has one.
   let tab=[...nav.querySelectorAll('button')].find(b=>b.textContent.includes('Images / Gallery'));
   if(!tab){tab=document.createElement('button');tab.type='button';tab.textContent='🖼️ Images / Gallery';nav.appendChild(tab);}
   tab.addEventListener('click',showImages);
-
   function showImages(){['bookings','services','products','images'].forEach(x=>{const el=document.getElementById(x);if(el)el.classList.toggle('hidden',x!=='images')});loadImages()}
   window.showImages=showImages;
   async function loadImages(){
