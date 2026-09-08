@@ -20,4 +20,4 @@ async function saveProduct(id){let{error}=await db.from('site_products').update(
 async function deleteItem(table,id,fn){if(!confirm('Delete this item?'))return;let{error}=await db.from(table).delete().eq('id',id);if(error)alert(error.message);else fn()}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function attr(v){return esc(v)}
 async function out(){await db.auth.signOut();location.reload()}
-</script></body></html>
+</script><script src="admin-enhancements.js"></script></body></html>
